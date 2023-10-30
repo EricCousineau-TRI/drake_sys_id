@@ -1,0 +1,6 @@
+py_library(
+    name = "module_py",
+    srcs = ["__init__.py"],
+    imports = [".."],
+    visibility = ["//:__subpackages__"],
+)

@@ -1,0 +1,11 @@
+filegroup(
+    name = "models",
+    srcs = [
+        "add_panda.dmd.yaml",
+        "panda_j7.urdf",
+    ],
+    data = [
+        "@drake//manipulation/models/franka_description:models",
+    ],
+    visibility = ["//visibility:public"],
+)

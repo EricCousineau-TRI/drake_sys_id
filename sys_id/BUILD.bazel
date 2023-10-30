@@ -1,0 +1,142 @@
+# -*- mode: python -*-
+# vi: set ft=python :
+
+load(
+    "//tools/skylark:pybind.bzl",
+    "pybind_py_library",
+)
+load(
+    "//tools/skylark:cc_shared.bzl",
+    "cc_shared_library",
+)
+
+py_library(
+    name = "module_py",
+    srcs = ["__init__.py"],
+    visibility = [":__subpackages__"],
+    deps = ["//:module_py"],
+)
+
+py_library(
+    name = "friction_py",
+    srcs = ["friction.py"],
+)
+
+py_library(
+    name = "friction_fit_py",
+    srcs = ["friction_fit.py"],
+    deps = [
+        ":friction_py",
+        "@pytorch",
+    ],
+)
+
+py_library(
+    name = "drake_torch_autodiff_py",
+    srcs = ["drake_torch_autodiff.py"],
+    deps = [
+        ":module_py",
+        "//common:containers_py",
+        "@drake//bindings/pydrake",
+        "@pytorch",
+    ],
+)
+
+py_test(
+    name = "drake_torch_autodiff_test",
+    srcs = ["test/drake_torch_autodiff_test.py"],
+    deps = [
+        ":drake_torch_autodiff_py",
+        "@drake//bindings/pydrake",
+    ],
+)
+
+py_library(
+    name = "dair_pll_inertia_py",
+    srcs = ["dair_pll_inertia.py"],
+    tags = ["nolint"],
+    deps = [
+        ":module_py",
+        "@pytorch",
+    ],
+)
+
+py_library(
+    name = "drake_torch_dynamics_py",
+    srcs = ["drake_torch_dynamics.py"],
+    deps = [
+        ":dair_pll_inertia_py",
+        ":drake_torch_autodiff_py",
+        ":module_py",
+        "@drake//bindings/pydrake",
+        "@pytorch",
+    ],
+)
+
+py_test(
+    name = "drake_torch_dynamics_test",
+    srcs = ["test/drake_torch_dynamics_test.py"],
+    data = [
+        "//models",
+        "@drake//multibody/benchmarks/acrobot:models",
+    ],
+    deps = [
+        ":drake_torch_autodiff_py",
+        ":drake_torch_dynamics_py",
+        "//common:multibody_extras_py",
+        "//common:path_util_py",
+    ],
+)
+
+py_library(
+    name = "drake_torch_sys_id_py",
+    srcs = ["drake_torch_sys_id.py"],
+    deps = [
+        ":cc_py",
+        ":dair_pll_inertia_py",
+        ":drake_torch_dynamics_py",
+        ":friction_fit_py",
+        ":module_py",
+        "@pytorch",
+    ],
+)
+
+py_test(
+    name = "drake_torch_sys_id_test",
+    srcs = ["test/drake_torch_sys_id_test.py"],
+    timeout = "moderate",
+    deps = [
+        ":drake_torch_dynamics_test",
+        ":drake_torch_sys_id_py",
+        "//common:multibody_extras_py",
+        "//common:path_util_py",
+    ],
+)
+
+cc_shared_library(
+    name = "shared_library",
+    srcs = ["sys_id_param.cc"],
+    hdrs = ["sys_id_param.h"],
+    deps = [
+        "@drake//:drake_shared_library",
+    ],
+)
+
+pybind_py_library(
+    name = "cc_py",
+    cc_deps = [
+        ":shared_library",
+        "//common:serialize_pybind",
+    ],
+    cc_so_name = "cc",
+    cc_srcs = ["cc_py.cc"],
+    py_deps = [
+        ":module_py",
+        "@drake//bindings/pydrake",
+    ],
+)
+
+filegroup(
+    name = "sys_id_data",
+    srcs = glob(["data/*"]),
+)

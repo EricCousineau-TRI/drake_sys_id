@@ -1,0 +1,43 @@
+# -*- mode: python -*-
+# vi: set ft=python :
+
+package(default_visibility = ["//visibility:public"])
+
+py_library(
+    name = "module_py",
+    srcs = ["__init__.py"],
+    deps = ["//:module_py"],
+)
+
+py_library(
+    name = "containers_py",
+    srcs = ["containers.py"],
+    deps = [":module_py"],
+)
+
+py_library(
+    name = "path_util_py",
+    srcs = ["path_util.py"],
+    deps = [
+        ":module_py",
+        "@bazel_tools//tools/python/runfiles",
+    ],
+)
+
+py_library(
+    name = "multibody_extras_py",
+    srcs = ["multibody_extras.py"],
+    deps = [
+        "@drake//bindings/pydrake",
+    ],
+)
+
+cc_library(
+    name = "serialize_pybind",
+    hdrs = ["serialize_pybind.h"],
+    deps = [
+        "@drake//:drake_shared_library",
+        "@drake//bindings/pydrake:pydrake_pybind",
+        "@drake//bindings/pydrake/common:serialize_pybind",
+    ],
+)
